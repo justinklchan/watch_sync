@@ -2,8 +2,7 @@
 See LICENSE folder for this sample’s licensing information.
 
 Abstract:
-FileTransferObservers manages the observation of the file transfer progress.
- Used on both iOS and watchOS.
+Manages the observation of the file transfer progress.
 */
 
 import Foundation
@@ -14,7 +13,7 @@ import WatchConnectivity
 class FileTransferObservers {
     
     // Hold the observations and file transfers.
-    // KVO will be removed automatically after observations are released.
+    // The system removes KVO automatically after releasing the observations.
     //
     private(set) var fileTransfers = [WCSessionFileTransfer]()
     private var observations = [NSKeyValueObservation]()
@@ -27,7 +26,7 @@ class FileTransferObservers {
         }
     }
     
-    // Observe a file transfer, hold the observation.
+    // Observe a file transfer, and hold the observation.
     //
     func observe(_ fileTransfer: WCSessionFileTransfer, handler: @escaping (Progress) -> Void) {
         let observation = fileTransfer.progress.observe(\.fractionCompleted) { progress, _ in
@@ -37,10 +36,10 @@ class FileTransferObservers {
         fileTransfers.append(fileTransfer)
     }
     
-    // Unobserve a file transfer, invalidate the observation.
+    // Un-observe a file transfer, and invalidate the observation.
     //
     func unobserve(_ fileTransfer: WCSessionFileTransfer) {
-        guard let index = fileTransfers.index(of: fileTransfer) else { return }
+        guard let index = fileTransfers.firstIndex(of: fileTransfer) else { return }
         let observation = observations.remove(at: index)
         observation.invalidate()
         fileTransfers.remove(at: index)

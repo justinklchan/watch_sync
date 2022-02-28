@@ -13,25 +13,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
     
-    private lazy var sessionDelegater: SessionDelegater = {
-        return SessionDelegater()
+    private lazy var sessionDelegator: SessionDelegator = {
+        return SessionDelegator()
     }()
 
     func application(_ application: UIApplication,
-                     didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
         // Trigger WCSession activation at the early phase of app launching.
         //
         assert(WCSession.isSupported(), "This sample requires Watch Connectivity support!")
-        WCSession.default.delegate = sessionDelegater
+        WCSession.default.delegate = sessionDelegator
         WCSession.default.activate()
-        
-        // Remind the setup of WatchSettings.sharedContainerID.
-        //
-        if WatchSettings.sharedContainerID.isEmpty {
-            print("Specify a shared container ID for WatchSettings.sharedContainerID to use watch settings!")
-        }
-
         return true
     }
 }

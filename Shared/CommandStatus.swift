@@ -2,13 +2,13 @@
 See LICENSE folder for this sample’s licensing information.
 
 Abstract:
-CommandStatus struct wraps the command status. Used on both iOS and watchOS.
+Wraps the command status.
 */
 
 import UIKit
 import WatchConnectivity
 
-// Constants to identify the Watch Connectivity methods, also used as user-visible strings in UI.
+// Constants to identify the Watch Connectivity methods, also for user-visible strings in UI.
 //
 enum Command: String {
     case updateAppContext = "UpdateAppContext"
@@ -19,7 +19,7 @@ enum Command: String {
     case transferCurrentComplicationUserInfo = "TransferComplicationUserInfo"
 }
 
-// Constants to identify the phrases of a Watch Connectivity communication.
+// Constants to identify the phrases of Watch Connectivity communication.
 //
 enum Phrase: String {
     case updated = "Updated"
@@ -39,7 +39,7 @@ struct TimedColor {
     var colorData: Data
     
     var color: UIColor {
-        let optional = try? NSKeyedUnarchiver.unarchivedObject(ofClasses: [UIColor.self], from: colorData)
+        let optional = ((try? NSKeyedUnarchiver.unarchivedObject(ofClasses: [UIColor.self], from: colorData)) as Any??)
         guard let color = optional as? UIColor else {
             fatalError("Failed to unarchive a UIClor object!")
         }
@@ -59,7 +59,7 @@ struct TimedColor {
     }
     
     init(_ timedColor: Data) {
-        let data = try? NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(timedColor)
+        let data = ((try? NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(timedColor)) as Any??)
         guard let dictionary = data as? [String: Any] else {
             fatalError("Failed to unarchive a timedColor dictionary!")
         }
@@ -67,7 +67,7 @@ struct TimedColor {
     }
 }
 
-// Wrap the command status to bridge the commands status and UI.
+// Wrap the command's status to bridge the commands status and UI.
 //
 struct CommandStatus {
     var command: Command

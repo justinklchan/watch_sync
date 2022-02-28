@@ -9,8 +9,8 @@ import Foundation
 import WatchKit
 import WatchConnectivity
 
-// identifier: page Interface Controller identifier.
-// Context: page context, a string used as the action button title.
+// identifier is the page Interface Controller identifier.
+// context is the page context or the action button title.
 //
 struct ControllerID {
     static let mainInterfaceController = "MainInterfaceController"
@@ -22,16 +22,15 @@ class MainInterfaceController: WKInterfaceController, TestDataProvider, SessionC
     @IBOutlet var statusLabel: WKInterfaceLabel!
     @IBOutlet var commandButton: WKInterfaceButton!
 
-    // Retain the controllers so that we don't have to reload root controllers for every switch.
+    // Retain the controllers so there's no need to reload root controllers for every switch.
     //
     static var instances = [MainInterfaceController]()
     private var command: Command!
     
     private let fileTransferObservers = FileTransferObservers()
     
-    // Context == nil: the fist-time loading, load pages with reloadRootController then
-    // Context != nil: Loading the pages, save the controller instances so that we can
-    // swtich pages more smoothly.
+    // context == nil: Load the pages using reloadRootController.
+    // context != nil: Load the pages and cache the controller instances to switch pages more smoothly.
     //
     override func awake(withContext context: Any?) {
         super.awake(withContext: context)
@@ -67,10 +66,10 @@ class MainInterfaceController: WKInterfaceController, TestDataProvider, SessionC
     
     override func willActivate() {
         super.willActivate()
-        guard command != nil else { return } // For first-time loading do nothing.
+        guard command != nil else { return } // Do nothing for first-time loading.
         
-        // For .updateAppContext, retrieve the receieved app context if any and update the UI.
-        // For .transferFile and .transferUserInfo, log the outstanding transfers if any.
+        // For .updateAppContext, retrieve the app context, if any, and update the UI.
+        // For .transferFile and .transferUserInfo, log the outstanding transfers, if any.
         //
         if command == .updateAppContext {
             let timedColor = WCSession.default.receivedApplicationContext
@@ -101,7 +100,7 @@ class MainInterfaceController: WKInterfaceController, TestDataProvider, SessionC
     }
     
     // Load paged-based UI.
-    // If a current context is specified, use the timed color it provided.
+    // Use the timed color if the current context provides.
     //
     private func reloadRootController(with currentContext: CommandStatus? = nil) {
         let commands: [Command] = [.updateAppContext, .sendMessage, .sendMessageData,
@@ -119,16 +118,17 @@ class MainInterfaceController: WKInterfaceController, TestDataProvider, SessionC
         }
         
         let names = Array(repeating: ControllerID.mainInterfaceController, count: contexts.count)
-        WKInterfaceController.reloadRootControllers(withNames: names, contexts: contexts)
+
+        WKInterfaceController.reloadRootControllers(withNamesAndContexts: Array( zip(names, contexts as [AnyObject]) ))
     }
     
-    // .dataDidFlow notification handler. Update the UI based on the command status.
+    // .dataDidFlow notification handler. Update the UI with the command status.
     //
     @objc
     func dataDidFlow(_ notification: Notification) {
         guard let commandStatus = notification.object as? CommandStatus else { return }
         
-        // If the data is from current channel, simple update color and time stamp, then return.
+        // If the data is from the current channel, simply update color and time stamp, then return.
         //
         if commandStatus.command == command {
             updateUI(with: commandStatus, errorMessage: commandStatus.errorMessage)
@@ -137,7 +137,7 @@ class MainInterfaceController: WKInterfaceController, TestDataProvider, SessionC
         
         // Move the screen to the page matching the data channel, then update the color and time stamp.
         //
-        if let index = type(of: self).instances.index(where: { $0.command == commandStatus.command }) {
+        if let index = type(of: self).instances.firstIndex(where: { $0.command == commandStatus.command }) {
             let controller = MainInterfaceController.instances[index]
             controller.becomeCurrentPage()
             controller.updateUI(with: commandStatus, errorMessage: commandStatus.errorMessage)
@@ -173,7 +173,7 @@ class MainInterfaceController: WKInterfaceController, TestDataProvider, SessionC
         }
     }
     
-    // Show outstanding transfer UI for .transferFile and .transferUserInfo.
+    // Show the outstanding transfer UI for .transferFile and .transferUserInfo.
     //
     @IBAction func statusAction() {
         if command == .transferFile {
@@ -187,7 +187,7 @@ class MainInterfaceController: WKInterfaceController, TestDataProvider, SessionC
 extension MainInterfaceController { // MARK: - Update status view.
     
     // Update the user interface with the command status.
-    // Note that there isn't a timed color when the interface controller is initially loaded.
+    // There isn't a timed color when the app initially loads the interface controller.
     //
     private func updateUI(with commandStatus: CommandStatus, errorMessage: String? = nil) {
         guard let timedColor = commandStatus.timedColor else {
@@ -201,15 +201,15 @@ extension MainInterfaceController { // MARK: - Update status view.
         commandButton.setAttributedTitle(title)
         statusLabel.setTextColor(timedColor.color)
         
-        // If there is an error, show the message and return.
+        // If there's an error, show the message and return.
         //
         if let errorMessage = errorMessage {
             statusLabel.setText("! \(errorMessage)")
             return
         }
         
-        // Observe the file transfer if it's phrase is "transferring".
-        // Unobserve a file transfer if it's phrase is "finished".
+        // Observe the file transfer if the phrase is "transferring."
+        // Un-observe a file transfer if the phrase is "finished."
         //
         if let fileTransfer = commandStatus.fileTransfer, commandStatus.command == .transferFile {
             if commandStatus.phrase == .finished {
@@ -221,7 +221,7 @@ extension MainInterfaceController { // MARK: - Update status view.
             }
         }
         
-        // Log the outstanding file transfers if any.
+        // Log the outstanding file transfers, if any.
         //
         if commandStatus.command == .transferFile {
             let transferCount = WCSession.default.outstandingFileTransfers.count
@@ -230,7 +230,7 @@ extension MainInterfaceController { // MARK: - Update status view.
             }
         }
         
-        // Log the outstanding UserInfo transfers if any.
+        // Log the outstanding UserInfo transfers, if any.
         //
         if commandStatus.command == .transferUserInfo {
             let transferCount = WCSession.default.outstandingUserInfoTransfers.count
@@ -242,7 +242,7 @@ extension MainInterfaceController { // MARK: - Update status view.
         statusLabel.setText( commandStatus.phrase.rawValue + " at\n" + timedColor.timeStamp)
     }
     
-    // Log the outstanding transfer information if any.
+    // Log the outstanding transfer information, if any.
     //
     private func logOutstandingTransfers(for commandStatus: CommandStatus, outstandingCount: Int) {
         if commandStatus.phrase == .transferring {
@@ -256,8 +256,7 @@ extension MainInterfaceController { // MARK: - Update status view.
         }
     }
     
-    // Log the file transfer progress. The command status is captured at the momment when
-    // the file transfer is observed.
+    // Log the file transfer progress. The app captures the command status when observing the file transfer.
     //
     private func logProgress(for commandStatus: CommandStatus) {
         guard let fileTransfer = commandStatus.fileTransfer else { return }

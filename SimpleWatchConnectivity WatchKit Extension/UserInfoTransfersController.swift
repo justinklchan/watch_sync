@@ -2,7 +2,7 @@
 See LICENSE folder for this sample’s licensing information.
 
 Abstract:
-UserInfoTransfersController manages outstanding user info transfers.
+Manages outstanding user info transfers.
 */
 
 import Foundation
@@ -25,7 +25,7 @@ class UserInfoTransfersController: WKInterfaceController {
 
     var command: Command!
     
-    // Outstanding transfers can change in the background so make a copy (cache) to
+    // Outstanding transfers can change in the background, so make a copy (cache) to
     // make sure the data doesn't change during the table loading cycle.
     // Subclasses can override the computed property to provide the right transfers.
     //
@@ -78,7 +78,7 @@ class UserInfoTransfersController: WKInterfaceController {
         NotificationCenter.default.removeObserver(self, name: .dataDidFlow, object: nil)
     }
     
-    // Cancel the transfer when the table row is selected.
+    // Cancel the transfer when the user selects the table row.
     //
     override func table(_ table: WKInterfaceTable, didSelectRowAt rowIndex: Int) {
         if rowIndex >= transfers.count {
@@ -89,7 +89,7 @@ class UserInfoTransfersController: WKInterfaceController {
         transfer.cancel(notifying: command)
     }
 
-    // .dataDidFlow notification handler. Update the UI the notification object.
+    // .dataDidFlow notification handler. Update the UI with the notification object.
     //
     @objc
     func dataDidFlow(_ notification: Notification) {

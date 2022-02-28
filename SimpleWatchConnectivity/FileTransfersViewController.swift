@@ -2,7 +2,7 @@
 See LICENSE folder for this sample’s licensing information.
 
 Abstract:
-FileTransfersViewController manages the file transfer of the iOS app.
+Manages the file transfer of the iOS app.
 */
 
 import UIKit
@@ -14,7 +14,7 @@ class FileTransfersViewController: UserInfoTransfersViewController {
     //
     private var fileTransferObservers = FileTransferObservers()
  
-    // Rebuild the fileTransferObservers every time transfersStore is rebuilt.
+    // Rebuild the fileTransferObservers every time when rebuilding transfersStore.
     //
     override var transfers: [SessionTransfer] {
         guard transfersStore == nil else { return transfersStore! }
@@ -24,13 +24,13 @@ class FileTransfersViewController: UserInfoTransfersViewController {
         let fileTransfers = WCSession.default.outstandingFileTransfers
         transfersStore = fileTransfers
         
-        // Observing handler can be called from background so dispatch
+        // The observing handler can run in the background, so dispatch
         // the UI update code to main queue and use the table data at the moment.
         //
         for transfer in fileTransfers {
             fileTransferObservers.observe(transfer) { progress in
                 DispatchQueue.main.async {
-                    guard let index = self.transfers.index(where: {
+                    guard let index = self.transfers.firstIndex(where: {
                         ($0 as? WCSessionFileTransfer)?.progress === progress }) else { return }
                     
                     let indexPath = IndexPath(row: index, section: 0)
@@ -43,7 +43,7 @@ class FileTransfersViewController: UserInfoTransfersViewController {
         return transfersStore!
     }
     
-    // Upate the detailed text label in the table cell with progress when the table is reloading.
+    // Update the detailed text label in the table cell with progress when the table is reloading.
     //
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = super.tableView(tableView, cellForRowAt: indexPath)

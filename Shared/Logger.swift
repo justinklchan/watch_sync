@@ -2,16 +2,13 @@
 See LICENSE folder for this sample’s licensing information.
 
 Abstract:
-Logger is a debug utility, used to write logs into a log file.
+A debug utility for writing logs into a log file.
 */
 
 import Foundation
 
-// Logger is a debug utility, used to write logs into a log file.
-// WKWatchConnectivityRefreshBackgroundTask is mostly triggered when the watch app is in the background
-// and background task budget is limited, we hence can't use Xcode debugger to attach the process.
-// Mostly for debugging purpose, the class writes logs into a file. Clients thus can tranfer the log file
-// and view it on iOS side.
+// WKWatchConnectivityRefreshBackgroundTask mostly happens when the watch app is in the background,
+// and background task budget is limited, so Xcode isn't suitable for debugging in this case.
 //
 class Logger {
     
@@ -23,9 +20,8 @@ class Logger {
         assert(fileHandle != nil, "Failed to create the file handle!")
     }
     
-    // Return folder URL, create it if not existing yet.
+    // Return the folder URL, and create the folder if it doesn't exist yet.
     // Return nil to trigger a crash if the folder creation fails.
-    // Not using lazy because we need to recreate when clearLogs is called.
     //
     private var _folderURL: URL?
     private var folderURL: URL! {
@@ -46,9 +42,8 @@ class Logger {
         return folderURL
     }
     
-    // Return file URL, create it if not existing yet.
+    // Return the file URL, and create the file if it doesn't exist yet.
     // Return nil to trigger a crash if the file creation fails.
-    // Not using lazy because we need to recreate when clearLogs is called.
     //
     private var _fileURL: URL?
     private var fileURL: URL! {
@@ -71,7 +66,7 @@ class Logger {
         return fileURL
     }
     
-    // Avoid creating DateFormatter for time stamp as Logger may count into execution budget.
+    // Avoid creating DateFormatter frequently, as Logger counts into the execution budget.
     //
     private lazy var timeStampFormatter: DateFormatter = {
         let dateFormatter = DateFormatter()
@@ -79,7 +74,7 @@ class Logger {
         return dateFormatter
     }()
     
-    // Use this dispatch queue to make the log file access is thread-safe.
+    // Use this dispatch queue to make the log file access thread-safe.
     // Public methods use performBlockAndWait to access the resource; private methods don't.
     //
     private lazy var ioQueue: DispatchQueue = {
@@ -99,7 +94,7 @@ class Logger {
     }
     
     // Append a line of text to the end of the file.
-    // Use FileHandle so that we can see to the end directly.
+    // Use FileHandle to seek to the end directly.
     //
     func append(line: String) {
         let timeStamp = timeStampFormatter.string(from: Date())
@@ -122,7 +117,7 @@ class Logger {
         }
     }
     
-    // Clear logs. Reset the folder and file URL for later use.
+    // Clear all logs. Reset the folder and file URL for later use.
     //
     func clearLogs() {
         performBlockAndWait {

@@ -2,7 +2,7 @@
 See LICENSE folder for this sample’s licensing information.
 
 Abstract:
-SessionDelegater implemments the WCSessionDelegate methods. Used on both iOS and watchOS.
+Implements the WCSessionDelegate methods.
 */
 
 import Foundation
@@ -12,9 +12,8 @@ import WatchConnectivity
 import ClockKit
 #endif
 
-// Custom notifications.
-// Posted when Watch Connectivity activation or reachibility status is changed,
-// or when data is received or sent. Clients observe these notifications to update the UI.
+// Custom notifications happen when Watch Connectivity activation or reachability status changes,
+// or when receiving or sending data. Clients observe these notifications to update the UI.
 //
 extension Notification.Name {
     static let dataDidFlow = Notification.Name("DataDidFlow")
@@ -23,23 +22,23 @@ extension Notification.Name {
 }
 
 // Implement WCSessionDelegate methods to receive Watch Connectivity data and notify clients.
-// WCsession status changes are also handled here.
+// Handle WCSession status changes.
 //
-class SessionDelegater: NSObject, WCSessionDelegate {
+class SessionDelegator: NSObject, WCSessionDelegate {
     
-    // Called when WCSession activation state is changed.
+    // Monitor WCSession activation state changes.
     //
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         postNotificationOnMainQueueAsync(name: .activationDidComplete)
     }
     
-    // Called when WCSession reachability is changed.
+    // Monitor WCSession reachability state changes.
     //
     func sessionReachabilityDidChange(_ session: WCSession) {
         postNotificationOnMainQueueAsync(name: .reachabilityDidChange)
     }
     
-    // Called when an app context is received.
+    // Did receive an app context.
     //
     func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
         var commandStatus = CommandStatus(command: .updateAppContext, phrase: .received)
@@ -47,7 +46,7 @@ class SessionDelegater: NSObject, WCSessionDelegate {
         postNotificationOnMainQueueAsync(name: .dataDidFlow, object: commandStatus)
     }
     
-    // Called when a message is received and the peer doesn't need a response.
+    // Did receive a message, and the peer doesn't need a response.
     //
     func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
         var commandStatus = CommandStatus(command: .sendMessage, phrase: .received)
@@ -55,14 +54,14 @@ class SessionDelegater: NSObject, WCSessionDelegate {
         postNotificationOnMainQueueAsync(name: .dataDidFlow, object: commandStatus)
     }
     
-    // Called when a message is received and the peer needs a response.
+    // Did receive a message, and the peer needs a response.
     //
     func session(_ session: WCSession, didReceiveMessage message: [String: Any], replyHandler: @escaping ([String: Any]) -> Void) {
         self.session(session, didReceiveMessage: message)
         replyHandler(message) // Echo back the time stamp.
     }
     
-    // Called when a piece of message data is received and the peer doesn't need a response.
+    // Did receive a piece of message data, and the peer doesn't need a response.
     //
     func session(_ session: WCSession, didReceiveMessageData messageData: Data) {
         var commandStatus = CommandStatus(command: .sendMessageData, phrase: .received)
@@ -70,14 +69,14 @@ class SessionDelegater: NSObject, WCSessionDelegate {
         postNotificationOnMainQueueAsync(name: .dataDidFlow, object: commandStatus)
     }
     
-    // Called when a piece of message data is received and the peer needs a response.
+    // Did receive a piece of message data, and the peer needs a response.
     //
     func session(_ session: WCSession, didReceiveMessageData messageData: Data, replyHandler: @escaping (Data) -> Void) {
         self.session(session, didReceiveMessageData: messageData)
         replyHandler(messageData) // Echo back the time stamp.
     }
     
-    // Called when a userInfo is received.
+    // Did receive a piece of userInfo.
     //
     func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any] = [:]) {
         var commandStatus = CommandStatus(command: .transferUserInfo, phrase: .received)
@@ -92,17 +91,18 @@ class SessionDelegater: NSObject, WCSessionDelegate {
             let server = CLKComplicationServer.sharedInstance()
             if let complications = server.activeComplications {
                 for complication in complications {
-                    // Call this method sparingly. If your existing complication data is still valid,
-                    // consider calling the extendTimeline(for:) method instead.
+                    // Call this method sparingly.
+                    // Use extendTimeline(for:) instead when the timeline is still valid.
                     server.reloadTimeline(for: complication)
                 }
             }
+
             #endif
         }
         postNotificationOnMainQueueAsync(name: .dataDidFlow, object: commandStatus)
     }
     
-    // Called when sending a userInfo is done.
+    // Did finish sending a piece of userInfo.
     //
     func session(_ session: WCSession, didFinish userInfoTransfer: WCSessionUserInfoTransfer, error: Error?) {
         var commandStatus = CommandStatus(command: .transferUserInfo, phrase: .finished)
@@ -120,23 +120,23 @@ class SessionDelegater: NSObject, WCSessionDelegate {
         postNotificationOnMainQueueAsync(name: .dataDidFlow, object: commandStatus)
     }
     
-    // Called when a file is received.
+    // Did receive a file.
     //
     func session(_ session: WCSession, didReceive file: WCSessionFile) {
         var commandStatus = CommandStatus(command: .transferFile, phrase: .received)
         commandStatus.file = file
         commandStatus.timedColor = TimedColor(file.metadata!)
         
-        // Note that WCSessionFile.fileURL will be removed once this method returns,
-        // so instead of calling postNotificationOnMainQueue(name: .dataDidFlow, userInfo: userInfo),
-        // we dispatch to main queue SYNCHRONOUSLY.
+        // The system removes WCSessionFile.fileURL once this method returns,
+        // so dispatch to main queue synchronously instead of calling
+        // postNotificationOnMainQueue(name: .dataDidFlow, userInfo: userInfo).
         //
         DispatchQueue.main.sync {
             NotificationCenter.default.post(name: .dataDidFlow, object: commandStatus)
         }
     }
     
-    // Called when a file transfer is done.
+    // Did finish a file transfer.
     //
     func session(_ session: WCSession, didFinish fileTransfer: WCSessionFileTransfer, error: Error?) {
         var commandStatus = CommandStatus(command: .transferFile, phrase: .finished)
@@ -150,12 +150,7 @@ class SessionDelegater: NSObject, WCSessionDelegate {
         commandStatus.timedColor = TimedColor(fileTransfer.file.metadata!)
 
         #if os(watchOS)
-        if WatchSettings.sharedContainerID.isEmpty == false {
-            let defaults = UserDefaults(suiteName: WatchSettings.sharedContainerID)
-            if let enabled = defaults?.bool(forKey: WatchSettings.clearLogsAfterTransferred), enabled {
-                Logger.shared.clearLogs()
-            }
-        }
+        Logger.shared.clearLogs()
         #endif
         postNotificationOnMainQueueAsync(name: .dataDidFlow, object: commandStatus)
     }

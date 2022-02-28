@@ -16,8 +16,8 @@ class MainViewController: UIViewController {
     @IBOutlet weak var noteLabel: UILabel!
     @IBOutlet weak var tablePlaceholderView: UIView!
     
-    // We log the file transfer progress on the log view, so need to
-    // oberve the file transfer progress.
+    // The app logs the file transfer progress on the log view, so it needs to
+    // observe the file transfer progress.
     //
     private let fileTransferObservers = FileTransferObservers()
     
@@ -41,7 +41,6 @@ class MainViewController: UIViewController {
     }
     
     // Implement the round corners on the top.
-    // Do this here because everything should have been laid out at this moment.
     //
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
@@ -75,7 +74,7 @@ class MainViewController: UIViewController {
         NotificationCenter.default.removeObserver(self)
     }
     
-    // Append the message to the end of the text view and make sure it is visiable.
+    // Append the message to the end of the text view, and make sure it's visible.
     //
     private func log(_ message: String) {
         logView.text = logView.text! + "\n\n" + message
@@ -83,7 +82,7 @@ class MainViewController: UIViewController {
     }
     
     private func updateReachabilityColor() {
-        // WCSession.isReachable triggers a warning if the session is not activated.
+        // WCSession.isReachable triggers a warning if the session isn't in .activated state.
         //
         var isReachable = false
         if WCSession.default.activationState == .activated {
@@ -111,7 +110,7 @@ class MainViewController: UIViewController {
     }
     
     // .dataDidFlow notification handler.
-    // Update the UI based on the userInfo dictionary of the notification.
+    // Update the UI using the userInfo dictionary of the notification.
     //
     @objc
     func dataDidFlow(_ notification: Notification) {
@@ -119,7 +118,7 @@ class MainViewController: UIViewController {
         
         defer { noteLabel.isHidden = logView.text.isEmpty ? false: true }
         
-        // If an error occurs, show the error message and returns.
+        // If an error occurs, show the error message and return.
         //
         if let errorMessage = commandStatus.errorMessage {
             log("! \(commandStatus.command.rawValue)...\(errorMessage)")

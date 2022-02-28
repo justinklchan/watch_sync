@@ -10,11 +10,11 @@ import WatchConnectivity
 
 class ExtensionDelegate: NSObject, WKExtensionDelegate {
 
-    private lazy var sessionDelegater: SessionDelegater = {
-        return SessionDelegater()
+    private lazy var sessionDelegator: SessionDelegator = {
+        return SessionDelegator()
     }()
 
-    // Hold the KVO observers as we want to keep oberving in the extension life time.
+    // Hold the KVO observers to keep observing the change in the extension's lifetime.
     //
     private var activationStateObservation: NSKeyValueObservation?
     private var hasContentPendingObservation: NSKeyValueObservation?
@@ -26,16 +26,12 @@ class ExtensionDelegate: NSObject, WKExtensionDelegate {
     override init() {
         super.init()
         assert(WCSession.isSupported(), "This sample requires a platform supporting Watch Connectivity!")
-        
-        if WatchSettings.sharedContainerID.isEmpty {
-            print("Specify a shared container ID for WatchSettings.sharedContainerID to use watch settings!")
-        }
-        
-        // WKWatchConnectivityRefreshBackgroundTask should be completed – Otherwise they will keep consuming
-        // the background executing time and eventually causes an app crash.
-        // The timing to complete the tasks is when the current WCSession turns to not .activated or
-        // hasContentPending flipped to false (see completeBackgroundTasks), so KVO is set up here to observe
-        // the changes if the two properties.
+                
+        // Apps must complete WKWatchConnectivityRefreshBackgroundTask. Otherwise, tasks keep consuming
+        // the background executing time and eventually cause a crash.
+        // The timing to complete the tasks is when the current WCSession turns to a state other than .activated
+        // or hasContentPending flips false (see completeBackgroundTasks), so use KVO to observe
+        // the changes of the two properties.
         //
         activationStateObservation = WCSession.default.observe(\.activationState) { _, _ in
             DispatchQueue.main.async {
@@ -49,13 +45,13 @@ class ExtensionDelegate: NSObject, WKExtensionDelegate {
         }
 
         // Activate the session asynchronously as early as possible.
-        // In the case of being background launched with a task, this may save some background runtime budget.
+        // When the system needs to launch the app to run a background task, this saves some background runtime budget.
         //
-        WCSession.default.delegate = sessionDelegater
+        WCSession.default.delegate = sessionDelegator
         WCSession.default.activate()
     }
     
-    // Compelete the background tasks, and schedule a snapshot refresh.
+    // Complete the background tasks, and schedule a snapshot refresh.
     //
     func completeBackgroundTasks() {
         guard !wcBackgroundTasks.isEmpty else { return }
@@ -63,10 +59,9 @@ class ExtensionDelegate: NSObject, WKExtensionDelegate {
         guard WCSession.default.activationState == .activated,
             WCSession.default.hasContentPending == false else { return }
         
-        wcBackgroundTasks.forEach { $0.setTaskCompleted() }
+        wcBackgroundTasks.forEach { $0.setTaskCompletedWithSnapshot(false) }
         
-        // Use Logger to log the tasks for debug purpose. A real app may remove the log
-        // to save the precious background time.
+        // Use Logger to log tasks for debugging purposes.
         //
         Logger.shared.append(line: "\(#function):\(wcBackgroundTasks) was completed!")
 
@@ -82,31 +77,22 @@ class ExtensionDelegate: NSObject, WKExtensionDelegate {
         wcBackgroundTasks.removeAll()
     }
     
-    // Be sure to complete all the tasks - otherwise they will keep consuming the background executing
-    // time until the time is out of budget and the app is killed.
-    //
-    // WKWatchConnectivityRefreshBackgroundTask should be completed after the pending data is received
-    // so retain the tasks first. The retained tasks will be completed at the following cases:
-    // 1. hasContentPending flips to false, meaning all the pending data is received. Pending data means
-    //    the data received by the device prior to the WCSession getting activated.
-    //    More data might arrive, but it isn't pending when the session activated.
+    // Apps must complete WKWatchConnectivityRefreshBackgroundTask after the pending data is received.
+    // This sample retains the tasks first, and complete them in the following cases:
+    // 1. hasContentPending flips false, meaning no pending data waiting for processing. Pending data means
+    //    the data the device receives prior to when the WCSession gets activated.
+    //    More data might arrive, but it isn't pending when the session gets activated.
     // 2. The end of the handle method.
-    //    This happens when hasContentPending can flip to false before the tasks are retained.
+    //    This happens when hasContentPending flips to false before the app retains the tasks.
     //
-    // If the tasks are completed before the WCSessionDelegate methods are called, the data will be delivered
-    // the app is running next time, so no data lost.
-    //
+    
     func handle(_ backgroundTasks: Set<WKRefreshBackgroundTask>) {
         for task in backgroundTasks {
-            
-            // Use Logger to log the tasks for debug purpose. A real app may remove the log
-            // to save the precious background time.
-            //
             if let wcTask = task as? WKWatchConnectivityRefreshBackgroundTask {
                 wcBackgroundTasks.append(wcTask)
                 Logger.shared.append(line: "\(#function):\(wcTask.description) was appended!")
             } else {
-                task.setTaskCompleted()
+                task.setTaskCompletedWithSnapshot(false)
                 Logger.shared.append(line: "\(#function):\(task.description) was completed!")
             }
         }

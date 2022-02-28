@@ -2,16 +2,13 @@
 See LICENSE folder for this sample’s licensing information.
 
 Abstract:
-SessionCommands protocol defines an interface to wrap Watch Connectivity APIs and bridge the UI.
- Its extension implements Watch Connectivity commands.
- Used on both iOS and watchOS.
+Defines an interface to wrap Watch Connectivity APIs and bridge the UI.
 */
 
 import UIKit
 import WatchConnectivity
 
-// Define an interface to wrap Watch Connectivity APIs and
-// bridge the UI. Shared by the iOS app and watchOS app.
+// Define an interface to wrap Watch Connectivity APIs and bridge the UI.
 //
 protocol SessionCommands {
     func updateAppContext(_ context: [String: Any])
@@ -23,11 +20,11 @@ protocol SessionCommands {
 }
 
 // Implement the commands. Every command handles the communication and notifies clients
-// when WCSession status changes or data flows. Shared by the iOS app and watchOS app.
+// when WCSession status changes or data flows.
 //
 extension SessionCommands {
     
-    // Update app context if the session is activated and update UI with the command status.
+    // Update the app context if the session is activated, and update UI with the command status.
     //
     func updateAppContext(_ context: [String: Any]) {
         var commandStatus = CommandStatus(command: .updateAppContext, phrase: .updated)
@@ -45,7 +42,7 @@ extension SessionCommands {
         postNotificationOnMainQueueAsync(name: .dataDidFlow, object: commandStatus)
     }
 
-    // Send a message if the session is activated and update UI with the command status.
+    // Send a message if the session is activated, and update the UI with the command status.
     //
     func sendMessage(_ message: [String: Any]) {
         var commandStatus = CommandStatus(command: .sendMessage, phrase: .sent)
@@ -55,6 +52,7 @@ extension SessionCommands {
             return handleSessionUnactivated(with: commandStatus)
         }
         
+        // A reply handler block runs asynchronously on a background thread and should return quickly.
         WCSession.default.sendMessage(message, replyHandler: { replyMessage in
             commandStatus.phrase = .replied
             commandStatus.timedColor = TimedColor(replyMessage)
@@ -68,7 +66,7 @@ extension SessionCommands {
         postNotificationOnMainQueueAsync(name: .dataDidFlow, object: commandStatus)
     }
     
-    // Send  a piece of message data if the session is activated and update UI with the command status.
+    // Send a piece of message data if the session is activated, and update the UI with the command status.
     //
     func sendMessageData(_ messageData: Data) {
         var commandStatus = CommandStatus(command: .sendMessageData, phrase: .sent)
@@ -78,6 +76,7 @@ extension SessionCommands {
             return handleSessionUnactivated(with: commandStatus)
         }
 
+        // A reply handler block runs asynchronously on a background thread and should return quickly.
         WCSession.default.sendMessageData(messageData, replyHandler: { replyData in
             commandStatus.phrase = .replied
             commandStatus.timedColor = TimedColor(replyData)
@@ -91,8 +90,8 @@ extension SessionCommands {
         postNotificationOnMainQueueAsync(name: .dataDidFlow, object: commandStatus)
     }
     
-    // Transfer a piece of user info if the session is activated and update UI with the command status.
-    // A WCSessionUserInfoTransfer object is returned to monitor the progress or cancel the operation.
+    // Transfer a piece of user info if the session is activated, and update the UI with the command status.
+    // Returns a WCSessionUserInfoTransfer object to monitor the progress or cancel the operation.
     //
     func transferUserInfo(_ userInfo: [String: Any]) {
         var commandStatus = CommandStatus(command: .transferUserInfo, phrase: .transferring)
@@ -106,8 +105,8 @@ extension SessionCommands {
         postNotificationOnMainQueueAsync(name: .dataDidFlow, object: commandStatus)
     }
     
-    // Transfer a file if the session is activated and update UI with the command status.
-    // A WCSessionFileTransfer object is returned to monitor the progress or cancel the operation.
+    // Transfer a file if the session is activated, and update the UI with the command status.
+    // Return a WCSessionFileTransfer object to monitor the progress or cancel the operation.
     //
     func transferFile(_ file: URL, metadata: [String: Any]) {
         var commandStatus = CommandStatus(command: .transferFile, phrase: .transferring)
@@ -120,9 +119,9 @@ extension SessionCommands {
         postNotificationOnMainQueueAsync(name: .dataDidFlow, object: commandStatus)
     }
     
-    // Transfer a piece fo user info for current complications if the session is activated
-    // and update UI with the command status.
-    // a WCSessionUserInfoTransfer object is returned to monitor the progress or cancel the operation.
+    // Transfer a piece of user info for current complications if the session is activated,
+    // and update the UI with the command status.
+    // Return a WCSessionUserInfoTransfer object to monitor the progress or cancel the operation.
     //
     func transferCurrentComplicationUserInfo(_ userInfo: [String: Any]) {
         var commandStatus = CommandStatus(command: .transferCurrentComplicationUserInfo, phrase: .failed)
@@ -149,7 +148,7 @@ extension SessionCommands {
         postNotificationOnMainQueueAsync(name: .dataDidFlow, object: commandStatus)
     }
     
-    // Post a notification on the main thread asynchronously.
+    // Post a notification from the main queue asynchronously.
     //
     private func postNotificationOnMainQueueAsync(name: NSNotification.Name, object: CommandStatus) {
         DispatchQueue.main.async {
@@ -157,12 +156,12 @@ extension SessionCommands {
         }
     }
 
-    // Handle the session unactived error. WCSession commands require an activated session.
+    // Handle unactivated session error. WCSession commands require an activated session.
     //
     private func handleSessionUnactivated(with commandStatus: CommandStatus) {
         var mutableStatus = commandStatus
         mutableStatus.phrase = .failed
-        mutableStatus.errorMessage =  "WCSession is not activeted yet!"
+        mutableStatus.errorMessage = "WCSession is not activated yet!"
         postNotificationOnMainQueueAsync(name: .dataDidFlow, object: commandStatus)
     }
 }

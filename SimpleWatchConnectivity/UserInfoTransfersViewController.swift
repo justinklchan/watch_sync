@@ -2,7 +2,7 @@
 See LICENSE folder for this sample’s licensing information.
 
 Abstract:
-UserInfoTransfersViewController manages the UserInfo transfer of the iOS app.
+Manages the UserInfo transfer of the iOS app.
 */
 
 import UIKit
@@ -14,7 +14,7 @@ class UserInfoTransfersViewController: UIViewController, UITableViewDelegate, UI
     
     var command: Command!
     
-    // Outstanding transfers can change in the background so make a copy (cache) to
+    // Outstanding transfers can change in the background, so make a copy (cache) to
     // make sure the data doesn't change during the table view loading cycle.
     // Subclasses can override the computed property to provide the right transfers.
     //
@@ -36,7 +36,7 @@ class UserInfoTransfersViewController: UIViewController, UITableViewDelegate, UI
         return transfersStore!
     }
 
-    // View Controlle life cycle.
+    // View controller life cycle.
     //
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -54,9 +54,9 @@ class UserInfoTransfersViewController: UIViewController, UITableViewDelegate, UI
     // MARK: - Actions handlers.
     //
     @IBAction func dismiss(_ sender: UIButton) {
-        willMove(toParentViewController: nil)
+        willMove(toParent: nil)
         view.removeFromSuperview()
-        removeFromParentViewController()
+        removeFromParent()
     }
     
     @objc
@@ -75,7 +75,7 @@ class UserInfoTransfersViewController: UIViewController, UITableViewDelegate, UI
         guard let commandStatus = notification.object as? CommandStatus else { return }
         
         // Invalidate the cached transfers and reload the table view with animation
-        // if the notification command is relevant and is not failed.
+        // if the notification command is relevant and isn't failed.
         //
         if commandStatus.command == command, commandStatus.phrase != .failed {
             transfersStore = nil

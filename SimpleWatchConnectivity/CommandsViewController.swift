@@ -111,10 +111,10 @@ extension CommandsViewController { // MARK: - UITableViewDelegate and UITableVie
             childViewController = transfersViewController
         }
         
-        addChildViewController(childViewController)
+        addChild(childViewController)
         childViewController.view.frame = view.convert(tableView.bounds, from: tableView)
         view.addSubview(childViewController.view)
-        childViewController.didMove(toParentViewController: self)
+        childViewController.didMove(toParent: self)
     }
 
     // UITableViewDelegate and UITableViewDataSource.

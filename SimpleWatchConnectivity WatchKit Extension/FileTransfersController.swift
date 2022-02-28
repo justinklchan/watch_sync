@@ -2,7 +2,7 @@
 See LICENSE folder for this sample’s licensing information.
 
 Abstract:
-FileTransfersController manages the outstanding file transfers.
+Manages the outstanding file transfers.
 */
 
 import Foundation
@@ -24,7 +24,7 @@ class FileTransfersController: UserInfoTransfersController {
         return ControllerID.fileTransferRowController
     }
     
-    // Rebuild the fileTransferObservers every time transfersStore is rebuilt.
+    // Rebuild the fileTransferObservers every time transfersStore changes.
     //
     override var transfers: [SessionTransfer] {
         guard transfersStore == nil else { return transfersStore! }
@@ -34,13 +34,13 @@ class FileTransfersController: UserInfoTransfersController {
         let fileTransfers = WCSession.default.outstandingFileTransfers
         transfersStore = fileTransfers
         
-        // Observing handler can be called from background so dispatch
-        // the UI update code to main queue and use the table data at the moment.
+        // The observing handler can run in the background, so dispatch
+        // the UI update code to the main queue and use the table data at the moment.
         //
         for transfer in fileTransfers {
             fileTransferObservers.observe(transfer) { progress in
                 DispatchQueue.main.async {
-                    guard let index = self.transfers.index(where: {
+                    guard let index = self.transfers.firstIndex(where: {
                         ($0 as? WCSessionFileTransfer)?.progress === progress }) else { return }
                     
                     if let row = self.table.rowController(at: index) as? FileTransferRowController {

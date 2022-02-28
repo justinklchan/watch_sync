@@ -2,15 +2,13 @@
 See LICENSE folder for this sample’s licensing information.
 
 Abstract:
-SessionTransfer protocol defines the session transfer interface.
- Its extension implements the cancel method to cancel the transfer and notify UI.
- Used on both iOS and watchOS.
+Defines the session transfer interface.
 */
 
 import Foundation
 import WatchConnectivity
 
-// Provide a unified interface for transfers. UI uses this interface to manage transfers.
+// Provide a unified interface for transfers. The UI uses this interface to manage transfers.
 //
 protocol SessionTransfer {
     var timedColor: TimedColor { get }
@@ -19,7 +17,7 @@ protocol SessionTransfer {
     func cancel(notifying command: Command)
 }
 
-// Implement the cancel method to cancel the transfer and notify UI.
+// Implement the cancel method to cancel the transfer and notify the UI.
 //
 extension SessionTransfer {
     func cancel(notifying command: Command) {
@@ -38,13 +36,13 @@ extension SessionTransfer {
     }
 }
 
-// Comform to SessionTransfer, provide the timed color.
+// Conform SessionTransfer, and provide a timed color.
 //
 extension WCSessionUserInfoTransfer: SessionTransfer {
     var timedColor: TimedColor { return TimedColor(userInfo) }
 }
 
-// Comform to SessionTransfer, provide the timed color.
+// Conform SessionTransfer, and provide a timed color.
 //
 extension WCSessionFileTransfer: SessionTransfer {
     var timedColor: TimedColor { return TimedColor(file.metadata!) }
