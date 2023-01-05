@@ -38,6 +38,21 @@ class MainViewController: UIViewController {
             self, selector: #selector(type(of: self).reachabilityDidChange(_:)),
             name: .reachabilityDidChange, object: nil
         )
+        let ts=NSDate().timeIntervalSince1970
+        print ("smartphone \(ts)")
+//        ls()
+    }
+    
+    func ls() {
+        let fileManager = FileManager.default
+        let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        do {
+            let fileURLs = try fileManager.contentsOfDirectory(at: documentsURL, includingPropertiesForKeys: nil)
+            // process files
+            print(fileURLs)
+        } catch {
+            print("Error while enumerating files \(documentsURL.path): \(error.localizedDescription)")
+        }
     }
     
     // Implement the round corners on the top.
@@ -115,6 +130,7 @@ class MainViewController: UIViewController {
     @objc
     func dataDidFlow(_ notification: Notification) {
         guard let commandStatus = notification.object as? CommandStatus else { return }
+        print ("data did flow")
         
         defer { noteLabel.isHidden = logView.text.isEmpty ? false: true }
         
@@ -129,22 +145,39 @@ class MainViewController: UIViewController {
         
         log("#\(commandStatus.command.rawValue)...\n\(commandStatus.phrase.rawValue) at \(timedColor.timeStamp)")
         
+        print ("file \(commandStatus.file)")
         if let fileURL = commandStatus.file?.fileURL {
+            print ("full url \(fileURL.absoluteURL)")
+            
+            if let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+                do {
+                    let ts=NSDate().timeIntervalSince1970
+                    let url2=URL(string:"\(dir.absoluteString)\(fileURL.absoluteURL.lastPathComponent)")
+                    print ("copy from \(fileURL.absoluteURL) to \(url2!)")
+                    try FileManager.default.moveItem(at: fileURL.absoluteURL,to: url2!)
+                }catch (let error) {
+                    print("\(error)")
+                }
+            }
             
             if fileURL.pathExtension == "log",
                 let content = try? String(contentsOf: fileURL, encoding: .utf8), !content.isEmpty {
                 log("\(fileURL.lastPathComponent)\n\(content)")
+                print("** \(fileURL.lastPathComponent)\n\(content)")
             } else {
                 log("\(fileURL.lastPathComponent)\n")
+                print("*** \(fileURL.lastPathComponent)\n")
             }
         }
-        
+        print ("command \(commandStatus.command)")
         if let fileTransfer = commandStatus.fileTransfer, commandStatus.command == .transferFile {
-
+            print ("got transfer")
             if commandStatus.phrase == .finished {
+                print ("trasnfer finished")
                 fileTransferObservers.unobserve(fileTransfer)
                 
             } else if commandStatus.phrase == .transferring {
+                print ("transferring")
                 fileTransferObservers.observe(fileTransfer) { _ in
                     self.logProgress(for: fileTransfer)
                 }
@@ -155,6 +188,7 @@ class MainViewController: UIViewController {
     // Log the file transfer progress.
     //
     private func logProgress(for fileTransfer: WCSessionFileTransfer) {
+        print ("log progress")
         DispatchQueue.main.async {
             let dateFormatter = DateFormatter()
             dateFormatter.timeStyle = .medium

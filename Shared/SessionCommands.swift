@@ -14,6 +14,7 @@ protocol SessionCommands {
     func updateAppContext(_ context: [String: Any])
     func sendMessage(_ message: [String: Any])
     func sendMessageData(_ messageData: Data)
+    func deleteData()
     func transferUserInfo(_ userInfo: [String: Any])
     func transferFile(_ file: URL, metadata: [String: Any])
     func transferCurrentComplicationUserInfo(_ userInfo: [String: Any])
@@ -66,6 +67,31 @@ extension SessionCommands {
         postNotificationOnMainQueueAsync(name: .dataDidFlow, object: commandStatus)
     }
     
+    func deleteData() {
+        print("delete data")
+        let fileManager = FileManager.default
+        let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        do {
+            if let dir = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.nmslab") {
+                let fileURLs = try fileManager.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)
+                for fileURL in fileURLs {
+                    print ("Ext \(fileURL.pathExtension)")
+                    if fileURL.pathExtension=="txt" ||  fileURL.pathExtension=="caf" || fileURL.pathExtension=="wav" {
+                        print ("delete File1 \(fileURL)")
+                        do {
+                            try FileManager.default.removeItem(at: fileURL)
+                        } catch let error as NSError {
+                            print("Error: \(error.domain)")
+                        }
+                    }
+                }
+            }
+        } catch {
+            print("Error while enumerating files \(documentsURL.path): \(error.localizedDescription)")
+        }
+        
+    }
+    
     // Send a piece of message data if the session is activated, and update the UI with the command status.
     //
     func sendMessageData(_ messageData: Data) {
@@ -115,8 +141,26 @@ extension SessionCommands {
         guard WCSession.default.activationState == .activated else {
             return handleSessionUnactivated(with: commandStatus)
         }
-        commandStatus.fileTransfer = WCSession.default.transferFile(file, metadata: metadata)
-        postNotificationOnMainQueueAsync(name: .dataDidFlow, object: commandStatus)
+        
+        let fileManager = FileManager.default
+        let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        do {
+            if let dir = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.nmslab") {
+                let fileURLs = try fileManager.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)
+                for fileURL in fileURLs {
+                    print ("Ext \(fileURL.pathExtension)")
+                    if fileURL.pathExtension=="txt" ||  fileURL.pathExtension=="caf" || fileURL.pathExtension=="wav" {
+                        print ("transfer File1 \(fileURL)")
+                        commandStatus.fileTransfer = WCSession.default.transferFile(fileURL, metadata: metadata)
+                        postNotificationOnMainQueueAsync(name: .dataDidFlow, object: commandStatus)
+                    }
+                }
+            }
+        } catch {
+            print("Error while enumerating files \(documentsURL.path): \(error.localizedDescription)")
+        }
+        
+        print ("finish")
     }
     
     // Transfer a piece of user info for current complications if the session is activated,

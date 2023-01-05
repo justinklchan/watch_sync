@@ -79,6 +79,7 @@ class MainInterfaceController: WKInterfaceController, TestDataProvider, SessionC
                 updateUI(with: commandStatus)
             }
         } else if command == .transferFile {
+            print ("activate file transfer")
             let transferCount = WCSession.default.outstandingFileTransfers.count
             if transferCount > 0 {
                 let commandStatus = CommandStatus(command: .transferFile, phrase: .finished)
@@ -105,7 +106,8 @@ class MainInterfaceController: WKInterfaceController, TestDataProvider, SessionC
     private func reloadRootController(with currentContext: CommandStatus? = nil) {
         let commands: [Command] = [.updateAppContext, .sendMessage, .sendMessageData,
                                    .transferFile, .transferUserInfo,
-                                   .transferCurrentComplicationUserInfo]
+                                   .transferCurrentComplicationUserInfo,
+                                   .deleteData]
         var contexts = [CommandStatus]()
         for aCommand in commands {
             var commandStatus = CommandStatus(command: aCommand, phrase: .finished)
@@ -166,6 +168,7 @@ class MainInterfaceController: WKInterfaceController, TestDataProvider, SessionC
         switch command {
         case .updateAppContext: updateAppContext(appContext)
         case .sendMessage: sendMessage(message)
+        case .deleteData: deleteData()
         case .sendMessageData: sendMessageData(messageData)
         case .transferUserInfo: transferUserInfo(userInfo)
         case .transferFile: transferFile(file, metadata: fileMetaData)

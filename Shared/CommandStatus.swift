@@ -13,6 +13,7 @@ import WatchConnectivity
 enum Command: String {
     case updateAppContext = "UpdateAppContext"
     case sendMessage = "SendMessage"
+    case deleteData = "DeleteData"
     case sendMessageData = "SendMessageData"
     case transferUserInfo = "TransferUserInfo"
     case transferFile = "TransferFile"
